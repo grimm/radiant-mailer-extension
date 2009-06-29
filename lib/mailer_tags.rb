@@ -274,6 +274,25 @@ module MailerTags
     end
   end
 
+  desc %{ Renders the ReCaptcha interface to validate mail. }
+  tag 'mailer:captcha' do |tag|
+
+    %{
+      <script type="text/javascript"
+         src="http://api.recaptcha.net/challenge?k=#{RCC_PUB}">
+      </script>
+
+      <noscript>
+        <iframe src="http://api.recaptcha.net/noscript?k=#{RCC_PUB}"
+         height="300" width="500" frameborder="0"></iframe><br>
+         <textarea name="recaptcha_challenge_field" rows="3" cols="40">
+         </textarea>
+         <input type="hidden" name="recaptcha_response_field" 
+           value="manual_challenge">
+      </noscript>
+    }
+  end
+
   def prior_value(tag, tag_name=tag.attr['name'])
     if mail = tag.locals.page.last_mail
       mail.data[tag_name]

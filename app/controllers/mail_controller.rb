@@ -1,4 +1,7 @@
+require 'recaptcha'
+
 class MailController < ApplicationController
+  include ReCaptcha::AppHelper
 
   no_login_required
   skip_before_filter :verify_authenticity_token  
@@ -9,7 +12,8 @@ class MailController < ApplicationController
 
     config, part_page = config_and_page(@page)
 
-    mail = Mail.new(part_page, config, params[:mailer])
+    params['rip'] = request.remote_ip
+    mail = Mail.new(part_page, config, params)
     @page.last_mail = part_page.last_mail = mail
     process_mail(mail, config)
 

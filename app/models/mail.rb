@@ -1,7 +1,13 @@
+require 'recaptcha'
+
 class Mail
+  include ReCaptcha::AppHelper
+
   attr_reader :page, :config, :data, :errors
   def initialize(page, config, data)
-    @page, @config, @data = page, config.with_indifferent_access, data
+    @page, @config, @data = page, config.with_indifferent_access, data[:mailer]
+    @params = data
+    @rip = data[:rip]  # Remote id
     @required = @data.delete(:required)
     @errors = {}
   end
@@ -35,6 +41,11 @@ class Mail
         @valid = false
       end
 
+      if validate_recap(@params, errors) == 'false'
+        errors['recap_error'] = "The words you entered are incorrect, please re-enter them."
+        @valid = false
+      end
+
       if @required
         @required.each do |name, msg|
           if data[name].blank?
@@ -43,6 +54,11 @@ class Mail
           end
         end
       end
+
+#      if validate_recap(params, recap_error)
+#        errors['recap_error'] = "The words you entered are incorrect, please re-enter them."
+#        @valid = false
+#      end
     end
     @valid
   end
@@ -79,8 +95,14 @@ class Mail
     plain_body = (page.part( :email ) ? page.render_part( :email ) : page.render_part( :email_plain ))
     html_body = page.render_part( :email_html ) || nil
 
+    bugs = ""
+    if( data["bugs"] )
+      bugs = "Category: #{data["bugs"]}"
+    end
+
     if plain_body.blank? and html_body.blank?
       plain_body = <<-EMAIL
+#{bugs}
 The following information was posted:
 #{data.to_hash.to_yaml}
       EMAIL
